@@ -1,0 +1,63 @@
+# contract_schema_version: 1.0
+# Canonical schema for a workflow contract (workflows/{id}/contract.yaml).
+# The contract is the single source of truth for a workflow. Any artifact that
+# contradicts the contract is wrong by definition. This schema version is
+# independent of methodology/VERSION; bump it here when fields change and write
+# a note in methodology/migrations/.
+
+workflow_id: string                    # slug, lowercase with hyphens
+workflow_name: string                  # human-readable
+owner: string                          # team or person responsible
+requester:
+  name: string
+  role: string
+  team: string
+status: enum                           # scoping | building | in_review | production | revising | retired
+methodology_version: string            # e.g., v0.1
+contract_schema_version: string        # e.g., 1.0
+created: date
+last_revised: date
+
+trigger:
+  type: enum                           # schedule | event | manual
+  description: string
+
+inputs:
+  - name: string
+    source: string
+    format: string
+    sensitivity: enum                  # public | internal | confidential | restricted
+
+outputs:
+  - name: string
+    format: string
+    audience: string
+    success_criteria: string
+
+definition_of_good: string             # narrative description
+acceptance_criteria:                   # testable conditions for promotion
+  - criterion: string
+    test_method: string
+
+success_metric:
+  name: string
+  measurement_method: string
+  current_value: nullable
+  target_value: nullable
+
+human_review:
+  required: boolean
+  reviewer: string
+  review_point: enum                   # pre_send | post_send | sample_only
+
+max_sensitivity: enum
+data_handling: string
+
+dependencies:
+  components: []                       # list of methodology/components/* references
+  external_systems: []
+
+evals:
+  test_cases_path: string              # relative path within workflow
+  regression_cases_path: string
+  pass_threshold: number

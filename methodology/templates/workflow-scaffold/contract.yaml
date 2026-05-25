@@ -1,0 +1,65 @@
+# Conforms to methodology/schemas/contract.schema.yaml (contract_schema_version 1.0).
+# Scaffold skeleton. /new-workflow replaces this with the scoped draft contract and sets
+# workflow_id, status, methodology_version, contract_schema_version, created, last_revised.
+# The contract is the single source of truth for this workflow.
+
+workflow_id: <slug>                      # set by /new-workflow
+workflow_name: <human-readable name>
+owner: <team or person responsible>
+requester:
+  name: <requester name>
+  role: <requester role>
+  team: <requester team>
+status: building                         # scoping | building | in_review | production | revising | retired
+methodology_version: <vX.Y>              # set by /new-workflow from methodology/VERSION
+contract_schema_version: "1.0"
+created: <YYYY-MM-DD>                     # set by /new-workflow
+last_revised: <YYYY-MM-DD>               # set by /new-workflow
+
+trigger:
+  type: manual                           # schedule | event | manual
+  description: <what schedule or event starts a run>
+
+inputs:
+  - name: <input name>
+    source: <where it comes from>
+    format: <file/format>
+    sensitivity: internal                # public | internal | confidential | restricted
+
+outputs:
+  - name: <deliverable name>
+    format: <format>
+    audience: <who reads it>
+    success_criteria: <what makes this output good>
+
+definition_of_good: >
+  <Narrative description of what a successful deliverable looks like.>
+
+acceptance_criteria:
+  - criterion: <testable condition for promotion>
+    test_method: <how it is checked>
+
+success_metric:
+  name: <metric name>
+  measurement_method: <how it is measured>
+  current_value: null
+  target_value: null
+
+human_review:
+  required: true
+  reviewer: <who reviews>
+  review_point: pre_send                 # pre_send | post_send | sample_only
+
+max_sensitivity: internal                # public | internal | confidential | restricted
+data_handling: >
+  <How inputs/outputs are handled given max_sensitivity.
+  See methodology/methods/sensitivity-policy.md.>
+
+dependencies:
+  components: []                         # methodology/components/* references
+  external_systems: []
+
+evals:
+  test_cases_path: evals/test-cases.yaml
+  regression_cases_path: evals/regression-cases.yaml
+  pass_threshold: 1.0

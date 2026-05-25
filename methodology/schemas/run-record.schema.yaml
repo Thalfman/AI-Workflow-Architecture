@@ -1,0 +1,18 @@
+# run_record_schema_version: 1.0
+# Structure of a single production run record
+# (workflows/{id}/operations/run-records/{timestamp}.yaml).
+# Records are append-only evidence that a workflow ran and how it went.
+
+timestamp: datetime        # ISO 8601, when the run occurred
+input_hash: string         # hash of the input(s), so runs are traceable without
+                           # committing raw input
+output_hash: string        # hash of the produced output
+success: boolean           # did the run produce an acceptable deliverable
+
+reviewer_signoff:          # present only when contract.human_review.required is true
+  reviewer: string
+  decision: enum           # approved | rejected | approved_with_edits
+  at: datetime
+
+anomalies: string          # nullable — anything unusual: retries, degraded inputs,
+                           # manual intervention, threshold near-misses
