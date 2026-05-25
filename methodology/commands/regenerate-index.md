@@ -25,7 +25,10 @@ contract edit.
    - `trigger.type`
    - `last_revised`
 3. Overwrite `portfolio/workflows.yaml` with the collected rows under the
-   `workflows:` key. Set `last_regenerated` to today's date and
+   `workflows:` key. If neither pattern matches any contract (a freshly
+   scaffolded or empty library), write an empty list — `workflows: []` — rather
+   than treating an unmatched glob as a literal path; an empty index is a valid
+   result, not an error. Set `last_regenerated` to today's date and
    `methodology_version_at_regeneration` to the contents of
    `methodology/VERSION`.
 

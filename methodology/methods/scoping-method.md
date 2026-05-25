@@ -24,7 +24,8 @@ request for more information, surfaced in `scoping-reply.md`.
 Read `workflows/*/contract.yaml`. If an existing workflow already produces a
 substantially similar deliverable for a similar audience, prefer **merge** over a
 new directory. Cross-workflow contamination is avoided by not creating
-near-duplicates.
+near-duplicates. If the library has no workflows yet, there are no merge
+candidates — proceed without treating the empty match as an error.
 
 ### 4. Draft a contract from the intake content
 Populate a `draft-contract.yaml` per `methodology/schemas/contract.schema.yaml`
@@ -47,6 +48,6 @@ State one paragraph of reasoning. Only **create** leads to a workflow directory,
 and only via `/new-workflow` after the operator approves.
 
 ## Output contract
-`/scope` writes `scoping-reply.md`, `draft-contract.yaml`, and the recommendation
-line into the intake folder. The intake folder is the durable record of the
-decision.
+`/scope` writes three files into the intake folder: `scoping-reply.md`,
+`draft-contract.yaml`, and `recommendation.md` (whose first line is the verdict).
+The intake folder is the durable record of the decision.

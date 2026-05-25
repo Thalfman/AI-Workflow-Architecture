@@ -32,7 +32,9 @@ Stamp a new workflow from the scaffold template.
    - Set `workflow_id: $1`.
    - Set `status: building`.
    - Set `methodology_version` to the contents of `methodology/VERSION`.
-   - Set `contract_schema_version` to match the schema file's version comment.
+   - Set `contract_schema_version` to match the schema file's version comment,
+     written as a quoted string (e.g. `"1.0"`) so YAML does not parse it as a
+     number; the schema declares this field as `string`.
    - Set `created` and `last_revised` to today's date.
 3. Initialize `workflows/$1/logs/iteration-log.md` with today's date and a first
    entry recording the creation event (created from scaffold, methodology

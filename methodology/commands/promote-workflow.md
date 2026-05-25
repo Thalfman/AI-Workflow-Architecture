@@ -11,7 +11,11 @@ Promote a workflow from `building` or `revising` to `production`.
 
 ## Preconditions (the promotion gate)
 
-Apply `methodology/methods/acceptance-review.md`. All must hold:
+First, the current `status` in `workflows/$1/contract.yaml` must be `building` or
+`revising`. If it is anything else (`scoping`, `in_review`, `production`, or
+`retired`), stop and report — promotion is only valid from those two states.
+
+Then apply `methodology/methods/acceptance-review.md`. All must hold:
 
 1. Eval cases pass at or above the contract's `evals.pass_threshold`
    (`workflows/$1/evals/test-cases.yaml` and `regression-cases.yaml`).
