@@ -1,0 +1,22 @@
+# eval_case_schema_version: 1.0
+# Structure of a single eval case. Test and regression case files
+# (workflows/{id}/evals/*.yaml) are lists of cases shaped like this.
+
+id: string                 # stable unique id within the file, e.g. tc-001
+description: string        # what this case checks, in one line
+
+input:
+  fixture: string          # path to an input fixture, relative to the workflow dir
+                           # e.g. fixtures/source/example-01.md
+
+expected:
+  # Exactly one of `output` or `rubric` is required.
+  output: string           # path to an expected-output fixture (for exact/semantic graders)
+                           # e.g. fixtures/expected/example-01.md
+  rubric: string           # natural-language criteria (for llm-judge graders)
+
+grader: enum               # exact | semantic | llm-judge
+pass_criteria: string      # what counts as a pass for this grader
+                           #   exact:     byte/string match
+                           #   semantic:  similarity threshold, e.g. ">= 0.85"
+                           #   llm-judge: the judgment the grader must return, e.g. "meets all rubric points"

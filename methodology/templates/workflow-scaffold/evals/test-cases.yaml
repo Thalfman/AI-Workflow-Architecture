@@ -1,0 +1,14 @@
+# Test cases for {{WORKFLOW_NAME}}. A YAML list; each item conforms to
+# methodology/schemas/eval-case.schema.yaml. Must pass at contract.evals.pass_threshold
+# before promotion. Start empty; add cases as you build.
+#
+# Example (copy, uncomment, adapt):
+# - id: tc-001
+#   description: Produces the deliverable with all required sections
+#   input:
+#     fixture: fixtures/source/example-01.md
+#   expected:
+#     rubric: All required sections present; no confidential data; within length budget
+#   grader: llm-judge
+#   pass_criteria: meets all rubric points
+[]

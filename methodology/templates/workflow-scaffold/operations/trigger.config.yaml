@@ -1,0 +1,12 @@
+# Trigger config for {{WORKFLOW_NAME}}. Mirrors contract.trigger. Exactly one type is
+# active. The runtime story (how this is actually invoked) is developed per-workflow.
+type: manual                 # schedule | event | manual
+
+schedule:                    # when type: schedule
+  cron: null                 # e.g. "0 9 * * 1"
+  timezone: null
+event:                       # when type: event
+  source: null
+  match: null
+manual:                      # when type: manual
+  invoked_by: null

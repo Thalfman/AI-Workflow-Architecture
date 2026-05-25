@@ -1,0 +1,4 @@
+# Regression cases for {{WORKFLOW_NAME}}. Same shape as test-cases.yaml
+# (methodology/schemas/eval-case.schema.yaml). Add a case whenever a real failure is
+# found and fixed, so it can never silently return.
+[]
