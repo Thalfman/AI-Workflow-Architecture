@@ -1,0 +1,37 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Library-specific ---
+# Machine-local Claude instructions and scratch notes
+CLAUDE.local.md
+*.local.md
+# Raw intake content that may be sensitive — only sanitized intakes are committed
+intakes/*/raw/
+# Local-only production run records
+workflows/*/operations/run-records/*.local.yaml
+# Secrets
+.env
+.env.local
