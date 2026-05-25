@@ -30,8 +30,8 @@ CLAUDE.local.md
 *.local.md
 # Raw intake content that may be sensitive — only sanitized intakes are committed
 intakes/*/raw/
-# Local-only production run records
-workflows/*/operations/run-records/*.local.yaml
+# Local-only production run records (active and retired workflows)
+workflows/**/operations/run-records/*.local.yaml
 # Secrets
 .env
 .env.local
