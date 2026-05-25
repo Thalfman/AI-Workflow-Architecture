@@ -11,7 +11,10 @@ contract edit.
 
 ## Steps
 
-1. Walk every `workflows/*/contract.yaml` (including `workflows/retired/*/`).
+1. Collect every workflow contract from both locations:
+   - Active: `workflows/*/contract.yaml` (the `workflows/retired/` archive
+     directory has no contract of its own, so it is skipped here).
+   - Retired: `workflows/retired/*/contract.yaml`.
 2. For each, extract a summary row:
    - `workflow_id`
    - `workflow_name`

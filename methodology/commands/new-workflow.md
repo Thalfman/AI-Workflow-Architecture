@@ -13,6 +13,14 @@ Stamp a new workflow from the scaffold template.
 ## Preconditions
 
 - `workflows/$1/` must not already exist. If it does, stop and report.
+- `workflows/retired/$1/` must not already exist. A retired workflow keeps its
+  `workflow_id` reserved, so recreating that id would produce duplicate ids
+  across active and retired contracts (and ambiguous index rows). To bring a
+  retired workflow back, revive it deliberately per `/retire-workflow` (reverse
+  the `git mv`), not with `/new-workflow`.
+- `$1` must not be the reserved word `retired`. `workflows/retired/` is the
+  archive namespace owned by `/retire-workflow`; a workflow with that id would
+  collide with the archive container.
 - The draft contract at `$2` must parse and broadly conform to
   `methodology/schemas/contract.schema.yaml`.
 
