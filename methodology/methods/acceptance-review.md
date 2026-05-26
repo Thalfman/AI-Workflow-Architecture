@@ -6,9 +6,11 @@ what "ready" means.
 
 ## The four gates
 
-Promotion is valid only from `building` or `revising`; `/promote-workflow` checks
-the current status first and refuses any other source state. Given a valid source
-status, a workflow may move to `production` only when all four gates hold:
+Promotion is valid only from `building`, `in_review`, or `revising`;
+`/promote-workflow` checks the current status first and refuses any other source
+state. (`in_review` is the "built, awaiting acceptance" state a workflow sits in
+after its artifacts are complete but before the sample is accepted.) Given a valid
+source status, a workflow may move to `production` only when all four gates hold:
 
 1. **Evals pass.** Test and regression cases
    (`evals/test-cases.yaml`, `evals/regression-cases.yaml`) pass at or above the
