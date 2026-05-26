@@ -1,0 +1,49 @@
+# Test cases for Weekly Status Summary. A YAML list; each item conforms to
+# methodology/schemas/eval-case.schema.yaml (eval_case_schema_version 1.1).
+# All must pass at contract.evals.pass_threshold (1.0) before promotion.
+# Every case uses the `structural` grader: deterministic, offline, no model call.
+# The artifact under test is the accepted sample at expected.output.
+
+- id: tc-001
+  description: Summary contains the three required sections in the contract.
+  input:
+    fixture: fixtures/source/
+  expected:
+    output: fixtures/expected/week-2026-05-18.md
+    checks:
+      required_sections:
+        - "## Highlights"
+        - "## Risks & Blockers"
+        - "## Next Week"
+  grader: structural
+  pass_criteria: all checks pass
+
+- id: tc-002
+  description: Every contributor who submitted an update is represented.
+  input:
+    fixture: fixtures/source/
+  expected:
+    output: fixtures/expected/week-2026-05-18.md
+    checks:
+      must_include_all:
+        - Alice
+        - Bob
+        - Carol
+  grader: structural
+  pass_criteria: all checks pass
+
+- id: tc-003
+  description: Summary stays within the length budget and leaks no raw personal data.
+  input:
+    fixture: fixtures/source/
+  expected:
+    output: fixtures/expected/week-2026-05-18.md
+    checks:
+      max_words: 350
+      min_words: 80
+      must_exclude:
+        - "@"
+        - SSN
+        - salary
+  grader: structural
+  pass_criteria: all checks pass

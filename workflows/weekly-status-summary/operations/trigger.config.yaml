@@ -1,0 +1,12 @@
+# Trigger config for Weekly Status Summary. Mirrors contract.trigger. Exactly one type is
+# active. The runtime story (how this is actually invoked) is developed per-workflow.
+type: schedule               # schedule | event | manual
+
+schedule:                    # when type: schedule
+  cron: "0 15 * * 5"         # Fridays at 15:00
+  timezone: America/New_York
+event:                       # when type: event
+  source: null
+  match: null
+manual:                      # when type: manual
+  invoked_by: null
