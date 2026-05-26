@@ -1,0 +1,3 @@
+# Python dependencies for the repository's automation scripts (scripts/).
+# Standard library plus a single third-party dependency for YAML parsing.
+pyyaml>=6.0
