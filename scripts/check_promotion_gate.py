@@ -95,7 +95,7 @@ def main(argv):
     status = contract.get("status")
     status_ok = status in PROMOTABLE_FROM
     print(f"[{'PASS' if status_ok else 'FAIL'}] source status is promotable "
-          f"(building|revising): got {status!r}")
+          f"(building|in_review|revising): got {status!r}")
 
     evals_ok, eval_lines = run_evals.evaluate_workflow(workflow_id)
     print(f"[{'PASS' if evals_ok else 'FAIL'}] gate 1 — evals pass at threshold")
