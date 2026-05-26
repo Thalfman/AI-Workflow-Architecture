@@ -62,6 +62,7 @@ the framework honest. Install once with `pip install -r requirements.txt`, then:
 | `scripts/regenerate_index.py` | The executable backbone of `/regenerate-index`. |
 | `scripts/run_evals.py <id>` / `--all` | Runs a workflow's eval cases offline and reports the pass rate. |
 | `scripts/check_promotion_gate.py <id>` | Verifies the four promotion-gate conditions before `/promote-workflow`. |
+| `scripts/workflowctl.py run <id> --input <folder>` | The model-free backbone of `/run-workflow`: scaffolds a run packet (copies the prompt, hashes inputs, stubs the record). |
 
 These same checks run automatically in CI (`.github/workflows/validate.yml`) on every
 push: contract validation, a portfolio-index drift check, and `run_evals.py --all`.

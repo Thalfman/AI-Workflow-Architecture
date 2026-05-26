@@ -11,7 +11,7 @@ and prepares; the operator approves; the existing lifecycle commands do the work
 | Funnel | Meaning | Lands on |
 |---|---|---|
 | **A — New Workflow** | A new recurring deliverable the library does not yet produce. | `/scope` (which still applies its own reject/defer/merge/one-off/create judgment) |
-| **B — Existing Run** | A normal run of a production workflow with new data (optionally a one-time note for this run only). | `/run-workflow` (PR2) |
+| **B — Existing Run** | A normal run of a production workflow with new data (optionally a one-time note for this run only). | `/run-workflow` |
 | **C — Revision** | A change to the *future* behavior of an existing workflow. | `/revise-workflow` |
 | **D — One-Off Assist** | A genuinely valuable but non-recurring task. | Do it directly; do not create a workflow. |
 
@@ -93,7 +93,7 @@ pre-empts that verdict and never creates a workflow.
 | Funnel | Requester form to ask for | Next operator command |
 |---|---|---|
 | **A** | `methodology/templates/intake-template.md` (reused — no duplicate) | `/scope intakes/{id}` |
-| **B** | `methodology/templates/workflow-run-input.md` | `/run-workflow {id} <input-folder>` (PR2) |
+| **B** | `methodology/templates/workflow-run-input.md` | `/run-workflow {id} <input-folder>` |
 | **C** | `methodology/templates/workflow-revision-request.md` | `/revise-workflow {id}` |
 | **D** | `methodology/templates/one-off-assist-request.md` | do directly — no workflow |
 

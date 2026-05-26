@@ -30,8 +30,12 @@ CLAUDE.local.md
 *.local.md
 # Raw intake content that may be sensitive — only sanitized intakes are committed
 intakes/*/raw/
-# Local-only production run records (active and retired workflows)
-workflows/**/operations/run-records/*.local.yaml
+# Local-only production run records and run-packet content (active and retired
+# workflows). Run packets live in run-records/{timestamp}/; raw produced content
+# (OUTPUT_DRAFT.local.md / FINAL_OUTPUT.local.md) is already covered by the global
+# *.local.md rule above. This also excludes any local-only YAML anywhere under
+# run-records, including inside a packet folder.
+workflows/**/operations/run-records/**/*.local.yaml
 # Secrets
 .env
 .env.local

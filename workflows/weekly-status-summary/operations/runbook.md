@@ -9,15 +9,23 @@ Scheduled weekly (see `operations/trigger.config.yaml`, which mirrors
 individual updates.
 
 ## Run steps
-1. Gather that week's contributor updates (`contract.inputs[]`).
-2. Run `agent/production.prompt.md` over the updates to produce the summary.
-3. Run `agent/reviewer.prompt.md` and capture the verdict
+Run this workflow with `/run-workflow weekly-status-summary <input-folder>`
+(`methodology/commands/run-workflow.md`). It produces an auditable run packet under
+`operations/run-records/{timestamp}/` from the templates in
+`methodology/templates/run-packet/`. The steps it follows:
+1. Gather that week's contributor updates (`contract.inputs[]`) into the input folder.
+2. Scaffold the packet — deterministically via
+   `python scripts/workflowctl.py run weekly-status-summary --input <input-folder>`,
+   which copies the prompt into `PROMPT_USED.md`, hashes the inputs into `INPUTS.md`,
+   and stubs `RUN_RECORD.md`. (No script generates the summary.)
+3. Run `agent/production.prompt.md` over the updates to produce the summary into
+   `OUTPUT_DRAFT.local.md` (`internal` content is gitignored, not committed).
+4. Run `agent/reviewer.prompt.md` and capture the verdict in `REVIEW.md`
    (`contract.human_review.required` is true; review point is `pre_send`).
-4. If approved, deliver the summary to Delivery leadership and stakeholders
-   (`contract.outputs[].audience`).
-5. Write a run record to `operations/run-records/{timestamp}.yaml`
-   (`methodology/schemas/run-record.schema.yaml`) — hashes of inputs/outputs and the
-   reviewer sign-off, not the raw text.
+5. If approved, write `FINAL_OUTPUT.local.md` and deliver the summary to Delivery
+   leadership and stakeholders (`contract.outputs[].audience`).
+6. Complete `RUN_RECORD.md` (`methodology/schemas/run-record.schema.yaml`) — hashes of
+   inputs/outputs and the reviewer sign-off, not the raw text.
 
 ## Failure handling
 - Reviewer returns `rejected`: do not send. Fix the summary and re-review; if the

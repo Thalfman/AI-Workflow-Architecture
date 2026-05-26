@@ -41,6 +41,7 @@ the requester for. See [`docs/OPERATOR-GUIDE.md`](docs/OPERATOR-GUIDE.md).
 | Triage a request | `/scope <intake-folder>` | Reply, draft contract, recommendation |
 | Create a workflow | `/new-workflow <id> <draft-contract>` | New `workflows/{id}/` from scaffold |
 | Ship it | `/promote-workflow <id>` | Status → `production` after evals + acceptance |
+| Run it | `/run-workflow <id> <input-folder>` | One production run, captured as a run packet |
 | Change it | `/revise-workflow <id>` | Status → `revising`, contract-first |
 | Sunset it | `/retire-workflow <id>` | Archived, ledger updated |
 | Rebuild the index | `/regenerate-index` | `portfolio/workflows.yaml` refreshed |

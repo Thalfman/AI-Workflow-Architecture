@@ -29,3 +29,15 @@ what changed and what is next. Newest entries at the bottom.
 - Moved `status` from `in_review` to `production` and regenerated the portfolio index.
 - Next: operate on the weekly schedule; revise with `/revise-workflow` if the
   deliverable needs to change (contract-first).
+
+## 2026-05-26 — runbook updated for /run-workflow (methodology v0.5)
+- Updated `operations/runbook.md` Run steps to operate via the new
+  `/run-workflow weekly-status-summary <input-folder>` command, which produces a run
+  packet under `operations/run-records/{timestamp}/` from the methodology run-packet
+  templates. Operational doc only — the contract is unchanged.
+- Verified `scripts/workflowctl.py run weekly-status-summary --input fixtures/source`
+  scaffolds a complete six-file packet (prompt copied, inputs hashed, record stubbed);
+  the demo packet was not committed (run-records hold real runs only). Raw content
+  files (`OUTPUT_DRAFT.local.md`, `FINAL_OUTPUT.local.md`) stay gitignored.
+- Next: operate weekly via `/run-workflow`; capture one-time asks as run notes, not
+  contract changes.
