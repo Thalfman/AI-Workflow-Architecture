@@ -14,7 +14,9 @@ How this workflow proves it meets its contract. Case structure:
 
 ## Graders
 <Which grader each case uses and why: `exact` for deterministic output,
-`semantic` for close-match prose, `llm-judge` for rubric-scored quality.>
+`semantic` for close-match prose, `llm-judge` for rubric-scored quality,
+`structural` for offline machine-checkable assertions about a committed output
+(required sections, coverage, length, banned tokens).>
 
 ## Pass threshold
 `contract.evals.pass_threshold` is the bar. The workflow cannot be promoted
