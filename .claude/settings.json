@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/validate_contracts.py:*)",
+      "Bash(python scripts/regenerate_index.py:*)",
+      "Bash(python scripts/run_evals.py:*)",
+      "Bash(python scripts/check_promotion_gate.py:*)",
+      "Bash(python3 scripts/validate_contracts.py:*)",
+      "Bash(python3 scripts/regenerate_index.py:*)",
+      "Bash(python3 scripts/run_evals.py:*)",
+      "Bash(python3 scripts/check_promotion_gate.py:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)"
+    ],
+    "deny": []
+  }
+}

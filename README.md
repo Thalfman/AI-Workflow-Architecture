@@ -5,6 +5,9 @@ building, production, revision, and retirement. It serves a single architect
 (the operator) who turns recurring deliverable requests from non-technical
 project managers into durable, governed AI workflows.
 
+> **New here?** Read [`START-HERE.md`](START-HERE.md) first — it traces one request
+> through every layer in about five minutes.
+
 This is not a generic monorepo. It is a workshop with three concerns sharing one
 root:
 
@@ -38,6 +41,7 @@ enforcement mechanism a solo operator can sustain.
 
 ## Where to go deeper
 
+- The five-minute on-ramp for newcomers: [`START-HERE.md`](START-HERE.md)
 - The rules that govern every session: [`CLAUDE.md`](CLAUDE.md)
 - How the methodology works and how to evolve it safely:
   [`methodology/README.md`](methodology/README.md)
