@@ -81,12 +81,20 @@ def grade_case(case, workflow_dir):
 
 
 def load_cases(workflow_dir, rel_path):
-    """Return (cases, error). cases is a list; error is a message or None."""
+    """Return (cases, error). cases is a list; error is a message or None.
+
+    A referenced-but-missing file is an error: the contract names both the test and
+    regression paths, so a missing one (e.g. dropped regression coverage) must fail
+    loudly rather than silently contribute zero cases.
+    """
     path = os.path.join(workflow_dir, rel_path)
     if not os.path.exists(path):
-        return [], None
-    with open(path) as f:
-        data = yaml.safe_load(f)
+        return [], f"{rel_path} does not exist"
+    try:
+        with open(path) as f:
+            data = yaml.safe_load(f)
+    except yaml.YAMLError as exc:
+        return [], f"{rel_path} is not valid YAML: {exc}"
     if data is None:
         return [], None
     if not isinstance(data, list):
@@ -101,9 +109,17 @@ def evaluate_workflow(workflow_id):
     if not os.path.exists(contract_path):
         return False, [f"{workflow_id}: no contract at {os.path.relpath(contract_path, REPO_ROOT)}"]
 
-    with open(contract_path) as f:
-        contract = yaml.safe_load(f) or {}
-    evals = contract.get("evals") or {}
+    try:
+        with open(contract_path) as f:
+            contract = yaml.safe_load(f) or {}
+    except yaml.YAMLError as exc:
+        return False, [f"{workflow_id}: contract.yaml is not valid YAML: {exc}"]
+    if not isinstance(contract, dict):
+        return False, [f"{workflow_id}: contract.yaml is not a mapping"]
+
+    evals = contract.get("evals")
+    if not isinstance(evals, dict):
+        return False, [f"{workflow_id}: evals is not a mapping"]
 
     threshold_raw = evals.get("pass_threshold", 1.0)
     if isinstance(threshold_raw, bool) or not isinstance(threshold_raw, (int, float)):

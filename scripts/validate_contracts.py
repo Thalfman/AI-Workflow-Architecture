@@ -96,6 +96,8 @@ def validate(path):
                 errors.append(
                     f"inputs[{i}].sensitivity ({sensitivity}) exceeds max_sensitivity ({max_sens})"
                 )
+    elif inputs is not None:
+        errors.append(f"inputs must be a list, got {type(inputs).__name__}")
 
     evals = contract.get("evals")
     if isinstance(evals, dict):
@@ -104,6 +106,8 @@ def validate(path):
             rel = evals.get(key)
             if not rel:
                 errors.append(f"evals.{key} is missing")
+            elif os.path.isabs(rel) or os.path.normpath(rel).startswith(".."):
+                errors.append(f"evals.{key} must be a relative path inside the workflow: {rel!r}")
             elif not os.path.exists(os.path.join(workflow_dir, rel)):
                 errors.append(f"evals.{key} -> {rel} does not exist")
         threshold = evals.get("pass_threshold")
@@ -111,6 +115,8 @@ def validate(path):
             errors.append("evals.pass_threshold is missing")
         elif isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
             errors.append(f"evals.pass_threshold must be numeric, got {threshold!r}")
+    elif evals is not None:
+        errors.append(f"evals must be a mapping, got {type(evals).__name__}")
 
     return errors
 

@@ -37,22 +37,42 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SENSITIVITY_ORDER = {"public": 0, "internal": 1, "confidential": 2, "restricted": 3}
 PROMOTABLE_FROM = {"building", "in_review", "revising"}
 
-# Acceptance is a dated "### ..." block whose body carries an explicit
-# "Verdict: accepted" line. Matching a heading that merely contains "accept" is too
-# loose (it would pass "not accepted" or "acceptance pending"). The dated heading +
-# explicit verdict pairing follows the scaffold decisions.md format.
+# Acceptance is a dated "### ..." block that (a) carries an explicit
+# "Verdict: accepted" line, (b) names who accepted, and (c) dates the acceptance in
+# the heading. Matching a heading that merely contains "accept" is too loose (it
+# would pass "not accepted"); reading the date from arbitrary body text is too loose
+# (a fixture filename like week-2026-05-18.md could masquerade as the date). This
+# follows the scaffold decisions.md format ("### <date> — sample accepted by <who>").
 HEADING_RE = re.compile(r"^###\s+(.*)$", re.MULTILINE)
 DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
 ACCEPTED_VERDICT_RE = re.compile(r"verdict:\s*accepted\b", re.IGNORECASE)
+ACCEPTED_BY_RE = re.compile(r"accepted by", re.IGNORECASE)
+
+
+def coerce_date(value):
+    if isinstance(value, datetime.date):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.date.fromisoformat(value.strip())
+        except ValueError:
+            return None
+    return None
 
 
 def gate_sensitivity(contract):
     max_sens = contract.get("max_sensitivity")
     if max_sens not in SENSITIVITY_ORDER:
         return [f"max_sensitivity invalid or missing: {max_sens!r}"]
+    inputs = contract.get("inputs")
+    if not isinstance(inputs, list):
+        return [f"inputs must be a list, got {type(inputs).__name__}"]
     errors = []
-    for i, inp in enumerate(contract.get("inputs") or []):
-        s = (inp or {}).get("sensitivity")
+    for i, inp in enumerate(inputs):
+        if not isinstance(inp, dict):
+            errors.append(f"inputs[{i}] is not a mapping")
+            continue
+        s = inp.get("sensitivity")
         if s not in SENSITIVITY_ORDER:
             errors.append(f"inputs[{i}].sensitivity invalid: {s!r}")
         elif SENSITIVITY_ORDER[s] > SENSITIVITY_ORDER[max_sens]:
@@ -87,12 +107,17 @@ def gate_acceptance(workflow_dir, contract):
     headings = list(HEADING_RE.finditer(text))
     accepted_dates = []
     for i, match in enumerate(headings):
+        heading = match.group(1)
         body_start = match.end()
         body_end = headings[i + 1].start() if i + 1 < len(headings) else len(text)
         block = text[body_start:body_end]
         if not ACCEPTED_VERDICT_RE.search(block):
             continue
-        date_match = DATE_RE.search(match.group(1)) or DATE_RE.search(block)
+        # Must name who accepted (acceptance-review.md: the entry names "who accepted").
+        if not (ACCEPTED_BY_RE.search(heading) or ACCEPTED_BY_RE.search(block)):
+            continue
+        # The acceptance date must be in the heading, not arbitrary body text.
+        date_match = DATE_RE.search(heading)
         if not date_match:
             continue
         try:
@@ -101,11 +126,14 @@ def gate_acceptance(workflow_dir, contract):
             continue
 
     if not accepted_dates:
-        return ["no dated acceptance entry with an explicit 'Verdict: accepted' in logs/decisions.md"]
+        return [
+            "no acceptance entry in logs/decisions.md with a dated '### ' heading, a named "
+            "approver ('accepted by ...'), and an explicit 'Verdict: accepted'"
+        ]
 
     latest = max(accepted_dates)
-    last_revised = contract.get("last_revised")
-    if isinstance(last_revised, datetime.date) and latest < last_revised:
+    last_revised = coerce_date(contract.get("last_revised"))
+    if last_revised and latest < last_revised:
         return [
             f"latest acceptance ({latest}) predates last_revised ({last_revised}); "
             "a fresh sample acceptance is required after a revision"
