@@ -8,9 +8,11 @@ acceptance-review.md in sync in the same commit.
 
 Gates (all must hold; promotion is all-or-nothing), valid from building/in_review/revising:
   1. Evals pass at the contract's threshold (delegated to run_evals).
-  2. A dated sample-acceptance entry exists in logs/decisions.md.
+  2. A dated sample-acceptance entry with an accepted verdict exists in
+     logs/decisions.md, dated no earlier than the contract's last_revised
+     (a fresh acceptance is required after a revision).
   3. Sensitivity is consistent: each input.sensitivity <= max_sensitivity.
-  4. operations/runbook.md is complete enough to operate the workflow.
+  4. operations/runbook.md is complete enough to trigger, run, review, and recover.
 
 Usage:
     python scripts/check_promotion_gate.py <workflow_id>
@@ -18,6 +20,7 @@ Exit code 0 only if the status precondition and all four gates hold.
 """
 from __future__ import annotations
 
+import datetime
 import os
 import re
 import sys
@@ -34,8 +37,13 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SENSITIVITY_ORDER = {"public": 0, "internal": 1, "confidential": 2, "restricted": 3}
 PROMOTABLE_FROM = {"building", "in_review", "revising"}
 
-# A dated acceptance heading, e.g. "### 2026-05-26 — sample accepted by ..."
-ACCEPTANCE_RE = re.compile(r"^###\s+\d{4}-\d{2}-\d{2}\b.*accept", re.IGNORECASE | re.MULTILINE)
+# Acceptance is a dated "### ..." block whose body carries an explicit
+# "Verdict: accepted" line. Matching a heading that merely contains "accept" is too
+# loose (it would pass "not accepted" or "acceptance pending"). The dated heading +
+# explicit verdict pairing follows the scaffold decisions.md format.
+HEADING_RE = re.compile(r"^###\s+(.*)$", re.MULTILINE)
+DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
+ACCEPTED_VERDICT_RE = re.compile(r"verdict:\s*accepted\b", re.IGNORECASE)
 
 
 def gate_sensitivity(contract):
@@ -64,17 +72,44 @@ def gate_runbook(workflow_dir):
     for needle in ("Trigger", "Run steps", "Failure"):
         if needle not in text:
             errors.append(f"runbook.md missing a '{needle}' section")
+    if "review" not in text.lower():
+        errors.append("runbook.md does not describe how the output is reviewed")
     return errors
 
 
-def gate_acceptance(workflow_dir):
+def gate_acceptance(workflow_dir, contract):
     path = os.path.join(workflow_dir, "logs", "decisions.md")
     if not os.path.isfile(path):
         return ["logs/decisions.md is missing"]
     with open(path) as f:
         text = f.read()
-    if not ACCEPTANCE_RE.search(text):
-        return ["no dated sample-acceptance entry (### YYYY-MM-DD ... accepted) in logs/decisions.md"]
+
+    headings = list(HEADING_RE.finditer(text))
+    accepted_dates = []
+    for i, match in enumerate(headings):
+        body_start = match.end()
+        body_end = headings[i + 1].start() if i + 1 < len(headings) else len(text)
+        block = text[body_start:body_end]
+        if not ACCEPTED_VERDICT_RE.search(block):
+            continue
+        date_match = DATE_RE.search(match.group(1)) or DATE_RE.search(block)
+        if not date_match:
+            continue
+        try:
+            accepted_dates.append(datetime.date.fromisoformat(date_match.group(1)))
+        except ValueError:
+            continue
+
+    if not accepted_dates:
+        return ["no dated acceptance entry with an explicit 'Verdict: accepted' in logs/decisions.md"]
+
+    latest = max(accepted_dates)
+    last_revised = contract.get("last_revised")
+    if isinstance(last_revised, datetime.date) and latest < last_revised:
+        return [
+            f"latest acceptance ({latest}) predates last_revised ({last_revised}); "
+            "a fresh sample acceptance is required after a revision"
+        ]
     return []
 
 
@@ -102,7 +137,7 @@ def main(argv):
     for line in eval_lines:
         print(f"        {line}")
 
-    acceptance_errors = gate_acceptance(workflow_dir)
+    acceptance_errors = gate_acceptance(workflow_dir, contract)
     print(f"[{'PASS' if not acceptance_errors else 'FAIL'}] gate 2 — sample acceptance recorded")
     for e in acceptance_errors:
         print(f"        - {e}")

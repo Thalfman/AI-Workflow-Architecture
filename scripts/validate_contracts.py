@@ -106,6 +106,11 @@ def validate(path):
                 errors.append(f"evals.{key} is missing")
             elif not os.path.exists(os.path.join(workflow_dir, rel)):
                 errors.append(f"evals.{key} -> {rel} does not exist")
+        threshold = evals.get("pass_threshold")
+        if threshold is None:
+            errors.append("evals.pass_threshold is missing")
+        elif isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
+            errors.append(f"evals.pass_threshold must be numeric, got {threshold!r}")
 
     return errors
 

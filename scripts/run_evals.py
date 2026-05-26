@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Run a workflow's eval cases offline and report the pass rate.
 
-Makes "evals pass" executable without a model call or network. Graders:
+Makes "evals pass" executable without a model call or network. Offline, only the
+structural grader can be auto-evaluated; the others need a freshly generated output
+or a model:
   - structural : deterministic assertions about a committed output
                  (required_sections, must_include_all, must_exclude, max/min_words).
-  - exact      : byte comparison of two committed files (input.fixture vs expected.output).
-  - semantic / llm-judge : need a model; reported as manual-review-required, never
-                 silently passed.
+  - exact / semantic / llm-judge : need a generated output or a model, so they are
+                 reported as manual-review-required and never silently passed.
 
 Case structure: methodology/schemas/eval-case.schema.yaml. The bar is the contract's
-evals.pass_threshold, computed over the gradable (structural/exact) cases.
+evals.pass_threshold, computed over the gradable (structural) cases.
 
 Usage:
     python scripts/run_evals.py <workflow_id>
@@ -30,7 +31,8 @@ except ImportError:
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORKFLOWS_DIR = os.path.join(REPO_ROOT, "workflows")
 
-MANUAL_GRADERS = {"semantic", "llm-judge"}
+# Graders that cannot be evaluated offline (need a generated output or a model).
+MANUAL_GRADERS = {"exact", "semantic", "llm-judge"}
 
 
 def run_structural(text, checks):
@@ -72,57 +74,69 @@ def grade_case(case, workflow_dir):
         errors = run_structural(text, expected.get("checks"))
         return ("PASS", []) if not errors else ("FAIL", errors)
 
-    if grader == "exact":
-        cand_rel = (case.get("input") or {}).get("fixture")
-        gold_rel = expected.get("output")
-        if not cand_rel or not gold_rel:
-            return "FAIL", ["exact case needs both input.fixture and expected.output"]
-        cand_path = os.path.join(workflow_dir, cand_rel)
-        gold_path = os.path.join(workflow_dir, gold_rel)
-        for p in (cand_path, gold_path):
-            if not os.path.isfile(p):
-                return "FAIL", [f"file not found: {os.path.relpath(p, workflow_dir)}"]
-        with open(cand_path, "rb") as f:
-            cand = f.read()
-        with open(gold_path, "rb") as f:
-            gold = f.read()
-        return ("PASS", []) if cand == gold else ("FAIL", ["byte mismatch with expected.output"])
-
     if grader in MANUAL_GRADERS:
-        return "MANUAL", [f"{grader} requires manual/model review; not graded offline"]
+        return "MANUAL", [f"{grader} needs a generated output or a model; not graded offline"]
 
     return "FAIL", [f"unknown grader: {grader!r}"]
 
 
 def load_cases(workflow_dir, rel_path):
+    """Return (cases, error). cases is a list; error is a message or None."""
     path = os.path.join(workflow_dir, rel_path)
     if not os.path.exists(path):
-        return []
+        return [], None
     with open(path) as f:
-        return yaml.safe_load(f) or []
+        data = yaml.safe_load(f)
+    if data is None:
+        return [], None
+    if not isinstance(data, list):
+        return [], f"{rel_path} is not a YAML list of cases"
+    return data, None
 
 
 def evaluate_workflow(workflow_id):
     """Evaluate one workflow. Return (passed: bool, lines: list[str])."""
     workflow_dir = os.path.join(WORKFLOWS_DIR, workflow_id)
     contract_path = os.path.join(workflow_dir, "contract.yaml")
-    lines = []
     if not os.path.exists(contract_path):
-        return False, [f"no contract at {os.path.relpath(contract_path, REPO_ROOT)}"]
+        return False, [f"{workflow_id}: no contract at {os.path.relpath(contract_path, REPO_ROOT)}"]
 
     with open(contract_path) as f:
         contract = yaml.safe_load(f) or {}
     evals = contract.get("evals") or {}
-    threshold = evals.get("pass_threshold", 1.0)
+
+    threshold_raw = evals.get("pass_threshold", 1.0)
+    if isinstance(threshold_raw, bool) or not isinstance(threshold_raw, (int, float)):
+        try:
+            threshold = float(threshold_raw)
+        except (TypeError, ValueError):
+            return False, [f"{workflow_id}: evals.pass_threshold is not numeric: {threshold_raw!r}"]
+    else:
+        threshold = float(threshold_raw)
 
     cases = []
-    cases += load_cases(workflow_dir, evals.get("test_cases_path") or "evals/test-cases.yaml")
-    cases += load_cases(workflow_dir, evals.get("regression_cases_path") or "evals/regression-cases.yaml")
+    load_errors = []
+    for rel in (
+        evals.get("test_cases_path") or "evals/test-cases.yaml",
+        evals.get("regression_cases_path") or "evals/regression-cases.yaml",
+    ):
+        loaded, err = load_cases(workflow_dir, rel)
+        if err:
+            load_errors.append(err)
+        else:
+            cases.extend(loaded)
+    if load_errors:
+        return False, [f"{workflow_id}: malformed eval file(s)"] + [f"  - {e}" for e in load_errors]
 
+    lines = []
     gradable = 0
     passed = 0
     manual = 0
     for case in cases:
+        if not isinstance(case, dict):
+            gradable += 1
+            lines.append(f"  FAIL   <malformed case>: expected a mapping, got {type(case).__name__}")
+            continue
         status, detail = grade_case(case, workflow_dir)
         cid = case.get("id", "?")
         if status == "MANUAL":
