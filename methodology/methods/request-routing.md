@@ -34,14 +34,33 @@ START: a request arrives
 │   │                     (maybe with one-time notes for THIS run only)?
 │   │                 │
 │   │                 ├─ YES → FUNNEL B  (Existing Run → /run-workflow)
-│   │                 └─ NO  → clarify; likely C or a one-off
+│   │                 └─ NO  → not a standard run; re-classify by intent:
+│   │                          a change to THIS workflow      → FUNNEL C
+│   │                          a separate recurring need       → FUNNEL A
+│   │                          a separate non-recurring task    → FUNNEL D
+│   │                          (concerns this workflow, intent unclear → FUNNEL C)
 │   │
-│   └─ NO ── Q4. Is the need RECURRING (will repeat on a schedule/trigger)?
+│   └─ NO ── First: does a NON-production workflow already match
+│            │      (status scoping / building / in_review / revising / retired)?
+│            │      If so, name its workflow_id + status and route to THAT
+│            │      workflow's lifecycle step — never drive a duplicate. A change to
+│            │      an in-flight workflow is FUNNEL C (/revise-workflow opens a
+│            │      production OR building workflow); otherwise resume its own
+│            │      lifecycle (scoping → /scope, in_review → /promote-workflow,
+│            │      retired → revive via /revise-workflow).
 │            │
-│            ├─ YES → FUNNEL A  (New Workflow Intake → /scope, which may still
-│            │                   return reject/defer/merge/one-off/create)
-│            └─ NO  → FUNNEL D  (One-Off Assist → do directly, no workflow)
+│            └─ Otherwise ─ Q4. Is the need RECURRING (schedule/trigger)?
+│                 │
+│                 ├─ YES → FUNNEL A  (New Workflow Intake → /scope, which compares
+│                 │                   against existing contracts and may itself
+│                 │                   return reject/defer/merge/one-off/create)
+│                 └─ NO  → FUNNEL D  (One-Off Assist → do directly, no workflow)
 ```
+
+Every path resolves to a funnel (A/B/C/D) or — only when a matched workflow is not
+in a state that supports the requested action — to a named lifecycle step for that
+existing workflow. Routing never invents a fifth outcome and never silently creates
+a duplicate of a workflow that already exists in any state.
 
 ## The B-vs-C distinction (the critical one)
 
@@ -100,9 +119,12 @@ required inputs missing.
    promotes anything, and never writes inside `workflows/`.
 2. It writes only three output files into the request folder:
    `recommended_funnel.md`, `missing_info.md`, `next_action.md`.
-3. For B/C it must **confirm the target workflow is `status: production`** before
-   recommending a run or revision. If the named workflow is not production (or does
-   not exist), say so and route to the appropriate lifecycle step instead.
+3. Confirm the matched workflow is in a state that supports the requested action
+   before recommending it. **B requires `status: production`** — you cannot run a
+   workflow that is not in production. **C requires `status: production` or
+   `building`** — matching `/revise-workflow`, which opens either for revision. If
+   the matched workflow is in any other state (or does not exist), say so and route
+   to the appropriate lifecycle step instead; never drive a duplicate.
 4. It respects sensitivity. If the request involves `confidential` or `restricted`
    data, flag the data-handling requirement and remind that raw content stays out
    of committed files, per `methodology/methods/sensitivity-policy.md`.
