@@ -54,11 +54,8 @@ directory of `$ARGUMENTS` when it is a single file):
   and naming the specific template for the requester to fill. If nothing is missing,
   say so.
 - `next_action.md` — the exact next operator command: `/scope intakes/{id}` (A),
-  `/revise-workflow {id}` (C), or "do directly — no workflow" (D). For **B**, the
-  landing command is `/run-workflow {id} <input-folder>`, which ships in a later
-  methodology version; until it exists, point the operator at the workflow's manual
-  run path — `workflows/{id}/operations/runbook.md` — so a routed run is never a
-  dead end.
+  `/run-workflow {id} <input-folder>` (B), `/revise-workflow {id}` (C), or "do
+  directly — no workflow" (D).
 
 ## Guardrails
 

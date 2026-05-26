@@ -1,6 +1,9 @@
 # run_record_schema_version: 1.0
-# Structure of a single production run record
-# (workflows/{id}/operations/run-records/{timestamp}.yaml).
+# Structure of a single production run record. As of methodology v0.5 a run produces
+# a run packet at workflows/{id}/operations/run-records/{timestamp}/, and this record
+# is the YAML block inside that packet's RUN_RECORD.md
+# (methodology/templates/run-packet/). Pre-v0.5 flat {timestamp}.yaml records remain
+# valid evidence and need no migration.
 # Records are append-only evidence that a workflow ran and how it went.
 
 timestamp: datetime        # ISO 8601, when the run occurred

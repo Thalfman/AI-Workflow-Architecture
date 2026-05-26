@@ -33,7 +33,7 @@ commands do the work.
 | Funnel | Means | Ask requester for | Then run |
 |---|---|---|---|
 | **A — New Workflow** | A new recurring deliverable we don't produce yet. | `methodology/templates/intake-template.md` | `/scope intakes/{id}` |
-| **B — Existing Run** | A normal run of a production workflow with new data. | `methodology/templates/workflow-run-input.md` | `/run-workflow {id} <input-folder>` *(PR2; until it ships, run manually per `workflows/{id}/operations/runbook.md`)* |
+| **B — Existing Run** | A normal run of a production workflow with new data. | `methodology/templates/workflow-run-input.md` | `/run-workflow {id} <input-folder>` |
 | **C — Revision** | A change to a workflow's future behavior. | `methodology/templates/workflow-revision-request.md` | `/revise-workflow {id}` |
 | **D — One-Off** | A valuable non-recurring task. | `methodology/templates/one-off-assist-request.md` | do it directly — no workflow |
 
@@ -62,9 +62,9 @@ own judgment and may still say `merge`, `defer`, or `create`.
 
 `weekly-status-summary` is in production; this is just new data. Routing returns
 **B**. Ask for `workflow-run-input.md` if the inputs aren't already attached, then
-run `/run-workflow weekly-status-summary <input-folder>` (PR2). Until `/run-workflow`
-ships, perform the run manually following
-`workflows/weekly-status-summary/operations/runbook.md`.
+run `/run-workflow weekly-status-summary <input-folder>`. It produces an auditable run
+packet under `operations/run-records/{timestamp}/`; raw content stays in `.local.md`
+files and only hashes plus the review verdict are committed.
 > "Here's this week's data, and just this once also add a Customer Wins section."
 
 Still **B** — the extra section is a one-time note for *this run only*. Record it
