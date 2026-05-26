@@ -95,7 +95,10 @@ def reviewer_signoff_block(contract):
             "  decision: null                # TODO approved | approved_with_edits | rejected\n"
             "  at: null                      # TODO ISO 8601 review time"
         )
-    return "reviewer_signoff: null          # contract.human_review.required is false"
+    # Schema: reviewer_signoff is present only when review is required. When it is not,
+    # omit the field entirely (a YAML comment, not a null key) so the record stays
+    # consistent with the contract and downstream presence checks don't misfire.
+    return "# reviewer_signoff omitted — contract.human_review.required is false"
 
 
 def input_table(file_hashes):
@@ -152,7 +155,7 @@ def cmd_run(args):
     if not os.path.isfile(prompt_path):
         return fail(f"production prompt missing: {prompt_source}")
     with open(prompt_path) as f:
-        prompt_body = f.read().strip()
+        prompt_body = f.read()  # verbatim — PROMPT_USED.md is an exact audit snapshot
 
     input_dir = os.path.abspath(args.input)
     if not os.path.isdir(input_dir):
