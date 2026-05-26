@@ -58,9 +58,13 @@ the framework honest. Install once with `pip install -r requirements.txt`, then:
 | `scripts/run_evals.py <id>` / `--all` | Runs a workflow's eval cases offline and reports the pass rate. |
 | `scripts/check_promotion_gate.py <id>` | Verifies the four promotion-gate conditions before `/promote-workflow`. |
 
+These same checks run automatically in CI (`.github/workflows/validate.yml`) on every
+push: contract validation, a portfolio-index drift check, and `run_evals.py --all`.
+
 ## Where to go deeper
 
 - The constitution every session obeys: [`CLAUDE.md`](CLAUDE.md)
 - The operating rhythm and command table: [`README.md`](README.md)
 - How the methodology works and evolves safely: [`methodology/README.md`](methodology/README.md)
 - The scoping judgement behind the intake gate: [`methodology/methods/scoping-method.md`](methodology/methods/scoping-method.md)
+- Reusing this repo for a new effort: [`methodology/templates/USING-THE-TEMPLATE.md`](methodology/templates/USING-THE-TEMPLATE.md)

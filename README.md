@@ -47,6 +47,8 @@ enforcement mechanism a solo operator can sustain.
   [`methodology/README.md`](methodology/README.md)
 - The scoping method behind the intake gate:
   [`methodology/methods/scoping-method.md`](methodology/methods/scoping-method.md)
+- Reusing this repo as a template for a new effort:
+  [`methodology/templates/USING-THE-TEMPLATE.md`](methodology/templates/USING-THE-TEMPLATE.md)
 
 ## Key principles
 
