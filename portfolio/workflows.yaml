@@ -2,11 +2,11 @@
 workflows:
 - workflow_id: weekly-status-summary
   workflow_name: Weekly Status Summary
-  status: in_review
+  status: production
   owner: AI Workflow Architect (operator)
   team: Delivery Operations
   methodology_version: v0.2
   trigger_type: schedule
   last_revised: 2026-05-26
 last_regenerated: 2026-05-26
-methodology_version_at_regeneration: v0.2
+methodology_version_at_regeneration: v0.3
