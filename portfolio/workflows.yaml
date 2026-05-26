@@ -9,4 +9,4 @@ workflows:
   trigger_type: schedule
   last_revised: 2026-05-26
 last_regenerated: 2026-05-26
-methodology_version_at_regeneration: v0.3
+methodology_version_at_regeneration: v0.4

@@ -30,8 +30,14 @@ enforcement mechanism a solo operator can sustain.
 
 ## Intake to production, in commands
 
+Before intake, there's a **front door**: a request arrives, you drop it in
+`intakes/{id}/` and run `/route-request` to classify it into one of four funnels
+(new workflow, existing run, revision, one-off) and learn which small form to ask
+the requester for. See [`docs/OPERATOR-GUIDE.md`](docs/OPERATOR-GUIDE.md).
+
 | Stage | Command | Result |
 |---|---|---|
+| Route a request | `/route-request <request-folder>` | Funnel A/B/C/D + what to ask for next |
 | Triage a request | `/scope <intake-folder>` | Reply, draft contract, recommendation |
 | Create a workflow | `/new-workflow <id> <draft-contract>` | New `workflows/{id}/` from scaffold |
 | Ship it | `/promote-workflow <id>` | Status → `production` after evals + acceptance |
