@@ -85,6 +85,16 @@ Valuable but not recurring. Routing returns **D**. Ask for
 `one-off-assist-request.md` if needed, then just do the work — do not create a
 workflow.
 
+**Compound (B + C in one message).**
+> "Here are this week's updates for the Friday summary, and from now on please also include a Customer Wins section."
+
+Two intents in one message: a normal run (B) and a permanent change (C). Under
+first-match-wins the whole request routes to **C**, because the future change is the
+controlling intent. Don't drop the run half: either split it off and run it now under
+the current contract, or queue a Funnel B run once the revision lands. Ask for
+`workflow-revision-request.md`, run `/revise-workflow weekly-status-summary`, and
+track the pending run.
+
 ## A note on sensitivity
 
 If a request involves `confidential` or `restricted` data, routing flags it. Keep

@@ -62,6 +62,12 @@ in a state that supports the requested action — to a named lifecycle step for 
 existing workflow. Routing never invents a fifth outcome and never silently creates
 a duplicate of a workflow that already exists in any state.
 
+**Compound requests (one message, two intents).** A single message can carry both a
+normal-run intent (B) and a future-behavior-change intent (C). Under first-match-wins
+the whole request routes to C, because Q2 fires on the future change before Q3 can
+see the run. The dropped B half is not lost: handle it by splitting the run off under
+the current contract now, or by queuing a Funnel B run once the revision lands.
+
 ## The B-vs-C distinction (the critical one)
 
 The litmus test is **scope of effect**:
@@ -75,10 +81,14 @@ When B-vs-C is genuinely ambiguous, **route to C** and say why. It is safer to o
 a controlled, contract-first revision than to silently bake a one-time ask into a
 contract — or to silently alter future behavior under cover of "just this run."
 
+When a request adds or alters content without an explicit one-time-or-permanent
+marker, permanence is ambiguous by default and the safety rule above routes it to C.
+
 | Request | Funnel |
 |---|---|
 | "Here's this week's data, and just this once also add a Customer Wins section." | **B** (one-time note) |
 | "From now on the weekly summary should include a Customer Wins section." | **C** (future change) |
+| "Add a Customer Wins section, let us try it and go from there." | **C** (no permanence marker; ambiguous by default) |
 
 ## Routing is not scoping
 
@@ -127,7 +137,15 @@ required inputs missing.
    to the appropriate lifecycle step instead; never drive a duplicate.
 4. It respects sensitivity. If the request involves `confidential` or `restricted`
    data, flag the data-handling requirement and remind that raw content stays out
-   of committed files, per `methodology/methods/sensitivity-policy.md`.
+   of committed files, per `methodology/methods/sensitivity-policy.md`. When the
+   request's stated sensitivity exceeds the matched workflow's contracted
+   `max_sensitivity`, still classify the request's intent normally, but flag the
+   envelope mismatch in `recommended_funnel.md` and tell the operator not to proceed
+   to `/run-workflow` until scope is confirmed, the inputs are sanitized or
+   downgraded, or a likely Funnel C review/sensitivity revision is opened to widen
+   the contracted envelope; routing only flags the mismatch and pauses execution, it
+   does not decide whether the envelope should expand (see
+   `methodology/methods/sensitivity-policy.md`).
 5. When B-vs-C is ambiguous, route to **C** and explain why.
 6. Missing fields are never a blocker — routing still classifies, then lists what
    to request (same philosophy as `/scope`).
