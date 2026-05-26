@@ -1,0 +1,19 @@
+# Regression cases for Weekly Status Summary. Same shape as test-cases.yaml
+# (methodology/schemas/eval-case.schema.yaml). Each case freezes a past failure so it
+# can never silently return. Must keep passing at contract.evals.pass_threshold.
+
+- id: rc-001
+  description: >
+    Guards a past failure where a contributor's email signature block leaked into
+    the summary. The summary must not echo signatures or contact details.
+  input:
+    fixture: fixtures/source/
+  expected:
+    output: fixtures/expected/week-2026-05-18.md
+    checks:
+      must_exclude:
+        - "@"
+        - "Best regards"
+        - "Sent from"
+  grader: structural
+  pass_criteria: all checks pass

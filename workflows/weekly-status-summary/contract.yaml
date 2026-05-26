@@ -1,0 +1,86 @@
+# Conforms to methodology/schemas/contract.schema.yaml (contract_schema_version 1.0).
+# The contract is the single source of truth for this workflow.
+
+workflow_id: weekly-status-summary
+workflow_name: Weekly Status Summary
+owner: AI Workflow Architect (operator)
+requester:
+  name: Jordan Lee (synthetic reference requester)
+  role: Program Manager
+  team: Delivery Operations
+status: production                       # scoping | building | in_review | production | revising | retired
+methodology_version: v0.2
+contract_schema_version: "1.0"
+created: 2026-05-26
+last_revised: 2026-05-26
+
+trigger:
+  type: schedule
+  description: >
+    Runs every Friday afternoon, once contributors have posted their individual
+    weekly updates for the week.
+
+inputs:
+  - name: contributor weekly updates
+    source: >
+      Individual markdown notes from each team member for the week. Collected in
+      fixtures/source/ for evals; synthetic only.
+    format: markdown
+    sensitivity: internal
+
+outputs:
+  - name: weekly status summary
+    format: markdown
+    audience: Delivery leadership and cross-team stakeholders
+    success_criteria: >
+      One page or less; contains the Highlights, Risks & Blockers, and Next Week
+      sections; every contributor's material is represented; no raw personal or
+      confidential data; readable by a non-technical stakeholder in under two minutes.
+
+definition_of_good: >
+  A concise, accurate roll-up of the team's week that a busy stakeholder can read
+  in under two minutes. It synthesizes the individual updates into shared themes
+  rather than listing them verbatim, attributes work to its owners, surfaces the
+  real risks and blockers, and states what the team will focus on next week. It
+  never invents progress the inputs do not support and never leaks personal or
+  confidential detail.
+
+acceptance_criteria:
+  - criterion: The summary contains the three required sections — Highlights, Risks & Blockers, Next Week.
+    test_method: Structural eval check `required_sections` in evals/test-cases.yaml.
+  - criterion: Every contributor who submitted an update is represented in the summary.
+    test_method: Structural eval check `must_include_all` (contributor names) in evals/test-cases.yaml.
+  - criterion: The summary stays within the one-page length budget (<= 350 words).
+    test_method: Structural eval check `max_words` in evals/test-cases.yaml.
+  - criterion: No raw personal or confidential data appears (emails, contact handles, signatures, compensation).
+    test_method: Structural eval check `must_exclude` (banned tokens) in evals/test-cases.yaml and regression-cases.yaml.
+
+success_metric:
+  name: Clean-send rate
+  measurement_method: >
+    Share of weekly summaries the reviewer approves with no edits before sending,
+    tracked across run records.
+  current_value: null
+  target_value: ">= 0.9"
+
+human_review:
+  required: true
+  reviewer: AI Workflow Architect (operator)
+  review_point: pre_send
+
+max_sensitivity: internal
+data_handling: >
+  Inputs and outputs are internal. No raw confidential or restricted data is
+  committed; all committed fixtures are synthetic. Real runs record input/output
+  hashes in operations/run-records/ rather than the raw text. Personal data in the
+  inputs (emails, signatures, handles) is stripped from the output. See
+  methodology/methods/sensitivity-policy.md.
+
+dependencies:
+  components: []
+  external_systems: []
+
+evals:
+  test_cases_path: evals/test-cases.yaml
+  regression_cases_path: evals/regression-cases.yaml
+  pass_threshold: 1.0

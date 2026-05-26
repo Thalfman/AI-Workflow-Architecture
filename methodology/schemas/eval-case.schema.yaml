@@ -1,4 +1,4 @@
-# eval_case_schema_version: 1.0
+# eval_case_schema_version: 1.1
 # Structure of a single eval case. Test and regression case files
 # (workflows/{id}/evals/*.yaml) are lists of cases shaped like this.
 
@@ -6,17 +6,32 @@ id: string                 # stable unique id within the file, e.g. tc-001
 description: string        # what this case checks, in one line
 
 input:
-  fixture: string          # path to an input fixture, relative to the workflow dir
-                           # e.g. fixtures/source/example-01.md
+  fixture: string          # path to a fixture, relative to the workflow dir.
+                           # For transformation graders (exact/semantic/llm-judge) this is the
+                           # input the prompt runs on, e.g. fixtures/source/example-01.md.
+                           # For `structural` it is the input set under summary, kept for
+                           # traceability; the artifact actually inspected is expected.output.
 
 expected:
-  # Exactly one of `output` or `rubric` is required.
-  output: string           # path to an expected-output fixture (for exact/semantic graders)
-                           # e.g. fixtures/expected/example-01.md
+  # Exactly one grader mode is required, matching the `grader` field below:
+  #   output  -> exact | semantic | structural
+  #   rubric  -> llm-judge
+  output: string           # path to an output fixture (e.g. fixtures/expected/example-01.md).
+                           # For exact/semantic it is the comparison target. For `structural`
+                           # it is the committed artifact whose form is checked.
   rubric: string           # natural-language criteria (for llm-judge graders)
+  checks:                  # required for `structural`; ignored by other graders.
+                           # Machine-checkable assertions about expected.output. Omit a key to skip it.
+    required_sections: []  # list of literal strings (e.g. headings) that must all be present
+    must_include_all: []   # list of substrings that must all appear (e.g. each contributor name)
+    must_exclude: []       # list of substrings that must NOT appear (e.g. raw PII markers)
+    max_words: null        # integer upper bound on word count, or null
+    min_words: null        # integer lower bound on word count, or null
 
-grader: enum               # exact | semantic | llm-judge
+grader: enum               # exact | semantic | llm-judge | structural
 pass_criteria: string      # what counts as a pass for this grader
-                           #   exact:     byte/string match
-                           #   semantic:  similarity threshold, e.g. ">= 0.85"
-                           #   llm-judge: the judgment the grader must return, e.g. "meets all rubric points"
+                           #   exact:      byte/string match
+                           #   semantic:   similarity threshold, e.g. ">= 0.85"
+                           #   llm-judge:  the judgment the grader must return, e.g. "meets all rubric points"
+                           #   structural: "all checks pass" — every assertion in expected.checks holds.
+                           #               Deterministic and offline; no model call required.

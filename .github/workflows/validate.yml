@@ -1,0 +1,32 @@
+name: validate
+
+# Mirrors the local checks an operator runs (see scripts/ and START-HERE.md).
+# No new behavior is introduced here.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate contracts
+        run: python scripts/validate_contracts.py
+
+      - name: Check portfolio index is in sync
+        run: |
+          python scripts/regenerate_index.py
+          git diff --exit-code portfolio/workflows.yaml
+
+      - name: Run evals
+        run: python scripts/run_evals.py --all

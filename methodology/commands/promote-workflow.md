@@ -5,15 +5,15 @@ argument-hint: <workflow_id>
 
 # /promote-workflow
 
-Promote a workflow from `building` or `revising` to `production`.
+Promote a workflow from `building`, `in_review`, or `revising` to `production`.
 
 **Argument:** `$1` — the `workflow_id`.
 
 ## Preconditions (the promotion gate)
 
-First, the current `status` in `workflows/$1/contract.yaml` must be `building` or
-`revising`. If it is anything else (`scoping`, `in_review`, `production`, or
-`retired`), stop and report — promotion is only valid from those two states.
+First, the current `status` in `workflows/$1/contract.yaml` must be `building`,
+`in_review`, or `revising`. If it is anything else (`scoping`, `production`, or
+`retired`), stop and report — promotion is only valid from those states.
 
 Then apply `methodology/methods/acceptance-review.md`. All must hold:
 

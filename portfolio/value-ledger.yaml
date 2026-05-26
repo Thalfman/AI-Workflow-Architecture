@@ -1,2 +1,20 @@
 # Maintained by /retire-workflow and manual value entries. Not derived from contracts.
+#
+# The value ledger is the portfolio's memory of what each workflow was worth. Unlike
+# portfolio/workflows.yaml (a derived snapshot of current state), the ledger is an
+# append-only, hand-maintained record that survives retirement.
+#
+# Add an entry when a workflow is retired (/retire-workflow writes one) or when you
+# want to record realized value for a live workflow. Each entry:
+#
+#   - workflow_id: <slug>            # the workflow this entry is about
+#     date: <YYYY-MM-DD>             # when the entry was recorded
+#     event: retired | value         # a retirement note, or a periodic value record
+#     value: <what it delivered>     # narrative: time saved, decisions enabled, etc.
+#     measurement: <how measured>    # the success_metric reading or basis for the claim
+#     notes: <reason / context>      # e.g. why it was retired, or caveats on the value
+#
+# Keep claims honest and tied to a measurement where possible. Never hand-edit
+# portfolio/workflows.yaml; that one is regenerated. This file, by contrast, is the
+# one portfolio artifact you do edit by hand.
 entries: []
