@@ -42,4 +42,16 @@ Promotion to production requires a dated entry here recording that a finished
 sample was accepted (`methodology/methods/acceptance-review.md`,
 `/promote-workflow` precondition 2). For this synthetic reference workflow,
 acceptance is recorded as operator/reference acceptance — there is no external
-requester. The accepted-sample entry is added during the promotion step.
+requester.
+
+### 2026-05-26 — sample accepted by operator (reference acceptance)
+- Accepted by: AI Workflow Architect (operator), standing in for the synthetic
+  requester. This is operator/reference acceptance, not requester acceptance —
+  there is no external requester for this reference workflow.
+- Sample reviewed: `fixtures/expected/week-2026-05-18.md`, the summary produced
+  from the three synthetic contributor updates in `fixtures/source/`.
+- Verdict: accepted.
+- Notes: The sample meets `contract.definition_of_good` and all four
+  `acceptance_criteria`; structural evals pass at threshold 1.0. Approved for
+  promoting this reference workflow to production. Real workflows require
+  requester or owner acceptance, not operator sign-off.

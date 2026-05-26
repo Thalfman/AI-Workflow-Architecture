@@ -18,3 +18,14 @@ what changed and what is next. Newest entries at the bottom.
   and ready for promotion-gate testing.
 - Next: run the eval runner and the promotion-gate checker, record operator
   acceptance, then `/promote-workflow`.
+
+## 2026-05-26 — promoted to production
+- Ran `scripts/run_evals.py weekly-status-summary`: 4/4 gradable cases passed
+  (rate 1.00 vs threshold 1.0) — tc-001/002/003 and regression rc-001.
+- All four promotion gates passed (`scripts/check_promotion_gate.py`): evals,
+  sample acceptance, sensitivity, and runbook.
+- Sample acceptance: operator/reference acceptance recorded 2026-05-26 in
+  `logs/decisions.md`.
+- Moved `status` from `in_review` to `production` and regenerated the portfolio index.
+- Next: operate on the weekly schedule; revise with `/revise-workflow` if the
+  deliverable needs to change (contract-first).

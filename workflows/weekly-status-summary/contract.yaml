@@ -8,7 +8,7 @@ requester:
   name: Jordan Lee (synthetic reference requester)
   role: Program Manager
   team: Delivery Operations
-status: in_review                        # scoping | building | in_review | production | revising | retired
+status: production                       # scoping | building | in_review | production | revising | retired
 methodology_version: v0.2
 contract_schema_version: "1.0"
 created: 2026-05-26
