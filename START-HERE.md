@@ -21,8 +21,13 @@ Follow a single request from inbox to production. Each step is a slash command; 
 canonical specification for every command lives in `methodology/commands/`, and the thin
 pointer in `.claude/commands/` is what makes it appear in Claude Code.
 
-1. **Intake.** A requester fills in `methodology/templates/intake-template.md` and drops
-   it in a folder under `intakes/`.
+0. **Front door.** Before intake, a raw request arrives. Drop it in `intakes/{id}/` and
+   run **`/route-request <request-folder>`** — it classifies the request into one of four
+   funnels (new workflow, existing run, revision, one-off) and tells you which small form
+   to ask the requester for. Routing is advisory and never mutates a workflow. The
+   operator's day-to-day playbook is [`docs/OPERATOR-GUIDE.md`](docs/OPERATOR-GUIDE.md).
+1. **Intake.** For a new recurring need, a requester fills in
+   `methodology/templates/intake-template.md` and drops it in a folder under `intakes/`.
 2. **`/scope <intake-folder>`** — triages the request and writes a reply, a draft
    contract, and a `recommendation.md` whose first line is one of
    *reject | defer | merge | one-off | create*. Scoping never creates a workflow.
