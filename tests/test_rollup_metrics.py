@@ -26,14 +26,18 @@ def write_contract(
     current_value: str = "null",
     metric_name: str = "Clean-send rate",
     human_review_required: bool = True,
+    review_point: str = "pre_send",
+    status: str = "production",
 ) -> Path:
     workflow_dir.mkdir(parents=True, exist_ok=True)
     contract = workflow_dir / "contract.yaml"
     contract.write_text(
         "# a hand-written contract with comments to preserve\n"
         "workflow_id: sample\n"
+        f"status: {status}\n"
         "human_review:\n"
         f"  required: {str(human_review_required).lower()}\n"
+        f"  review_point: {review_point}\n"
         "success_metric:\n"
         f"  name: {metric_name}\n"
         f"  current_value: {current_value}\n"
@@ -219,6 +223,53 @@ def test_rollup_refuses_when_human_review_not_required(tmp_path: Path) -> None:
 
     contract_data = yaml.safe_load(contract.read_text())
     assert contract_data["success_metric"]["current_value"] is None
+
+
+def test_rollup_refuses_non_pre_send_review(tmp_path: Path) -> None:
+    workflow_dir = tmp_path / "workflows" / "sample"
+    contract = write_contract(workflow_dir, review_point="post_send")
+    run_dir = workflow_dir / "operations" / "run-records"
+    write_record(run_dir, "20260501T160000Z", "approved")
+    write_ledger(tmp_path)
+
+    with pytest.raises(rm.RollupError):
+        rm.rollup("sample", repo_root=tmp_path, today=FIXED_DAY)
+
+    contract_data = yaml.safe_load(contract.read_text())
+    assert contract_data["success_metric"]["current_value"] is None
+
+
+def test_rollup_refuses_non_production_status(tmp_path: Path) -> None:
+    workflow_dir = tmp_path / "workflows" / "sample"
+    contract = write_contract(workflow_dir, status="revising")
+    run_dir = workflow_dir / "operations" / "run-records"
+    write_record(run_dir, "20260501T160000Z", "approved")
+    write_ledger(tmp_path)
+
+    with pytest.raises(rm.RollupError):
+        rm.rollup("sample", repo_root=tmp_path, today=FIXED_DAY)
+
+    contract_data = yaml.safe_load(contract.read_text())
+    assert contract_data["success_metric"]["current_value"] is None
+
+
+def test_rollup_is_idempotent_on_rerun(tmp_path: Path) -> None:
+    workflow_dir = tmp_path / "workflows" / "sample"
+    write_contract(workflow_dir)
+    run_dir = workflow_dir / "operations" / "run-records"
+    write_record(run_dir, "20260501T160000Z", "approved")
+    write_record(run_dir, "20260515T160000Z", "approved")
+    ledger = write_ledger(tmp_path)
+
+    rm.rollup("sample", repo_root=tmp_path, today=FIXED_DAY)
+    rm.rollup("sample", repo_root=tmp_path, today=FIXED_DAY)  # same day rerun
+    rm.rollup(
+        "sample", repo_root=tmp_path, today=datetime.date(2026, 6, 3)
+    )  # later day
+
+    # Same records and result -> one ledger entry, no duplicates across reruns.
+    entries = yaml.safe_load(ledger.read_text())["entries"]
+    assert len(entries) == 1
 
 
 def test_main_refuses_and_exits_nonzero(

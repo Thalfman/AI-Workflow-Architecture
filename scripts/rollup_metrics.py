@@ -10,13 +10,16 @@ writes it into the contract's success_metric.current_value, and appends one valu
 entry to portfolio/value-ledger.yaml.
 
 Reproducible by construction, and it refuses rather than write a misleading value:
+  - the workflow is not status: production -> a non-production contract (e.g. one
+                            opened for /revise-workflow) should not gain a fresh value;
+  - success_metric is not the clean-send rate, or review is not a required pre_send
+                            step -> it would overwrite an unrelated metric;
   - no run records          -> a workflow that never ran has no value to assert;
-  - success_metric is not the clean-send rate, or human_review is not required
-                            -> it would overwrite an unrelated metric;
   - any record is unfinished (success / decision still null)
                             -> it would silently skew the rate.
-In every refusal it exits non-zero and leaves current_value untouched. A fabricated
-number would be worse than null.
+It is also idempotent: re-running with the same records and result does not append a
+duplicate ledger entry. In every refusal it exits non-zero and leaves current_value
+untouched -- a fabricated number would be worse than null.
 
 The contract and the ledger both carry hand-written comments, so this script edits
 them surgically (one line / append-only) rather than round-tripping the whole file.
@@ -138,11 +141,32 @@ def write_current_value(contract_path: Path, value: float) -> None:
     contract_path.write_text(new_text)
 
 
-def append_ledger_entry(ledger_path: Path, entry: dict) -> None:
-    """Append one entry to the value ledger, keeping its hand-written comment header."""
+def _already_recorded(entries: list[dict], entry: dict) -> bool:
+    """True if this exact measurement is already in the ledger.
+
+    Idempotency key: workflow_id + event + measurement (the measurement string encodes
+    the value, the counts, and how many records it came from). Re-running the rollup on
+    the same records and result must not append a duplicate value claim.
+    """
+    return any(
+        existing.get("workflow_id") == entry["workflow_id"]
+        and existing.get("event") == entry["event"]
+        and existing.get("measurement") == entry["measurement"]
+        for existing in entries
+    )
+
+
+def append_ledger_entry(ledger_path: Path, entry: dict) -> bool:
+    """Append one entry to the value ledger, keeping its hand-written comment header.
+
+    Idempotent: returns False without writing when the same measurement is already
+    recorded, so the rerun-before-each-review cadence does not accumulate duplicates.
+    """
     raw = ledger_path.read_text()
     doc = yaml.safe_load(raw) or {}
     entries = list(doc.get("entries") or [])
+    if _already_recorded(entries, entry):
+        return False
     entries.append(entry)
 
     marker = _ENTRIES_KEY.search(raw)
@@ -154,6 +178,7 @@ def append_ledger_entry(ledger_path: Path, entry: dict) -> None:
         default_flow_style=False,
     )
     ledger_path.write_text(f"{header}\n{body}" if header else body)
+    return True
 
 
 def rollup(
@@ -173,19 +198,36 @@ def rollup(
         raise RollupError(f"no contract at {contract_path}")
 
     contract = yaml.safe_load(contract_path.read_text()) or {}
+    status = contract.get("status")
     human_review = contract.get("human_review") or {}
     metric = contract.get("success_metric") or {}
     metric_name = metric.get("name") or ""
     target = metric.get("target_value")
 
-    # Only roll up workflows whose success_metric is the clean-send rate. The rate is
-    # defined by reviewer sign-offs, so a workflow without required review, or with a
-    # different metric entirely, must be refused rather than have its real metric
-    # overwritten by an unrelated approval fraction.
+    # The clean-send rate is a production measurement. Refuse any other status -- a
+    # workflow opened for /revise-workflow is `revising` and still holds its old
+    # production records, and writing a fresh value there would make a contract under
+    # change look like it has a new live measurement (mirrors /run-workflow's guard).
+    if status != "production":
+        raise RollupError(
+            f"{workflow_id}: status is {status!r}, not 'production' -- rollup_metrics "
+            "only measures production workflows."
+        )
+
+    # Only roll up workflows whose success_metric is the clean-send rate, which is
+    # defined by a required pre-send reviewer sign-off. A workflow without required
+    # review, reviewing at another point, or measuring something else must be refused
+    # rather than have its real metric overwritten by an unrelated approval fraction.
     if not (isinstance(human_review, dict) and human_review.get("required")):
         raise RollupError(
             f"{workflow_id}: the clean-send rate is defined by reviewer sign-offs, but "
             "human_review.required is not true -- rollup_metrics does not apply here."
+        )
+    if human_review.get("review_point") != "pre_send":
+        raise RollupError(
+            f"{workflow_id}: the clean-send rate counts approvals *before sending*, but "
+            f"human_review.review_point is {human_review.get('review_point')!r}, not "
+            "'pre_send' -- rollup_metrics does not apply here."
         )
     if CLEAN_SEND_TOKEN not in metric_name.lower().replace(" ", "-"):
         raise RollupError(
