@@ -2,17 +2,21 @@
 """Roll run-record verdicts up into a workflow's measured success metric.
 
 The feedback connector the closed loop was missing (stages 5 -> 6 in
-docs/plans/closed-loop-repo-assessment.md): nothing read run packets and turned the
-reviewer verdicts into a number. This script reads every RUN_RECORD.md under
-workflows/{id}/operations/run-records/, computes the clean-send rate (the share of
-runs the reviewer approved with no edits), writes it into the contract's
-success_metric.current_value, and appends one value entry to
-portfolio/value-ledger.yaml.
+docs/plans/closed-loop-repo-assessment.md): nothing read run records and turned the
+reviewer verdicts into a number. This script reads every committed run record for a
+workflow (v0.5+ packet RUN_RECORD.md files and pre-v0.5 flat {timestamp}.yaml files),
+computes the clean-send rate (the share of runs the reviewer approved with no edits),
+writes it into the contract's success_metric.current_value, and appends one value
+entry to portfolio/value-ledger.yaml.
 
-Reproducible by construction: the value is derived from committed run records, never
-hand-typed. If a workflow has no run records the script REFUSES to write and exits
-non-zero -- a workflow that has never run has no measured value to assert, and a
-fabricated number would be worse than null.
+Reproducible by construction, and it refuses rather than write a misleading value:
+  - no run records          -> a workflow that never ran has no value to assert;
+  - success_metric is not the clean-send rate, or human_review is not required
+                            -> it would overwrite an unrelated metric;
+  - any record is unfinished (success / decision still null)
+                            -> it would silently skew the rate.
+In every refusal it exits non-zero and leaves current_value untouched. A fabricated
+number would be worse than null.
 
 The contract and the ledger both carry hand-written comments, so this script edits
 them surgically (one line / append-only) rather than round-tripping the whole file.
@@ -39,6 +43,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # A "clean send" is a run the reviewer approved with no edits. approved_with_edits
 # and rejected both count as runs (denominator) but not as clean sends (numerator).
 CLEAN_DECISION = "approved"
+VALID_DECISIONS = {"approved", "approved_with_edits", "rejected"}
+
+# The clean-send rate is defined by reviewer sign-offs, so this script only applies to
+# a workflow whose success_metric is that rate. The metric name is free-form in the
+# contract, so identify it by this token (normalized) rather than overwriting whatever
+# metric a workflow happens to declare.
+CLEAN_SEND_TOKEN = "clean-send"
 
 _YAML_BLOCK = re.compile(r"```yaml\n(.*?)\n```", re.DOTALL)
 _CURRENT_VALUE_LINE = re.compile(r"^(?P<indent>[ \t]*)current_value:.*$", re.MULTILINE)
@@ -50,17 +61,32 @@ class RollupError(Exception):
 
 
 def find_run_records(workflow_dir: Path) -> list[Path]:
-    """Every packet's RUN_RECORD.md, sorted by packet folder (i.e. by timestamp)."""
+    """Every committed run record for the workflow, in sorted (timestamp) order.
+
+    Two record shapes are valid evidence (run-record schema + the v0.5 migration):
+      - packet records    -- operations/run-records/{timestamp}/RUN_RECORD.md (v0.5+)
+      - legacy flat files  -- operations/run-records/{timestamp}.yaml (pre-v0.5)
+    Local-only *.local.yaml files are never committed evidence and are excluded.
+    """
     run_dir = workflow_dir / "operations" / "run-records"
-    return sorted(run_dir.glob("*/RUN_RECORD.md"))
+    packets = run_dir.glob("*/RUN_RECORD.md")
+    flat = (p for p in run_dir.glob("*.yaml") if not p.name.endswith(".local.yaml"))
+    return sorted([*packets, *flat])
 
 
 def parse_run_record(path: Path) -> dict:
-    """Extract and parse the fenced YAML block from a RUN_RECORD.md."""
-    match = _YAML_BLOCK.search(path.read_text())
-    if match is None:
-        raise RollupError(f"{path}: no ```yaml block found in run record")
-    data = yaml.safe_load(match.group(1))
+    """Parse a run record into its mapping.
+
+    A packet RUN_RECORD.md carries the record in a fenced ```yaml block; a legacy flat
+    {timestamp}.yaml file is the YAML document itself.
+    """
+    text = path.read_text()
+    if path.suffix == ".md":
+        match = _YAML_BLOCK.search(text)
+        if match is None:
+            raise RollupError(f"{path}: no ```yaml block found in run record")
+        text = match.group(1)
+    data = yaml.safe_load(text)
     if not isinstance(data, dict):
         raise RollupError(f"{path}: run-record YAML is not a mapping")
     return data
@@ -71,6 +97,25 @@ def decision_of(record: dict) -> str | None:
     if isinstance(signoff, dict):
         return signoff.get("decision")
     return None
+
+
+def assert_finished(path: Path, record: dict) -> None:
+    """Refuse an unfinalized run record rather than count it as a non-clean send.
+
+    A scaffolded-but-unfinished packet leaves success and reviewer_signoff.decision
+    null; including it would silently lower the metric.
+    """
+    if record.get("success") is None:
+        raise RollupError(
+            f"{path}: run record is unfinished (success is null). Finalize or remove "
+            "the packet before rolling up."
+        )
+    decision = decision_of(record)
+    if decision not in VALID_DECISIONS:
+        raise RollupError(
+            f"{path}: run record has no reviewer decision yet ({decision!r}). Finalize "
+            "or remove the packet before rolling up."
+        )
 
 
 def clean_send_rate(records: list[dict]) -> tuple[float, int, int]:
@@ -128,9 +173,26 @@ def rollup(
         raise RollupError(f"no contract at {contract_path}")
 
     contract = yaml.safe_load(contract_path.read_text()) or {}
+    human_review = contract.get("human_review") or {}
     metric = contract.get("success_metric") or {}
-    metric_name = metric.get("name") or "Clean-send rate"
+    metric_name = metric.get("name") or ""
     target = metric.get("target_value")
+
+    # Only roll up workflows whose success_metric is the clean-send rate. The rate is
+    # defined by reviewer sign-offs, so a workflow without required review, or with a
+    # different metric entirely, must be refused rather than have its real metric
+    # overwritten by an unrelated approval fraction.
+    if not (isinstance(human_review, dict) and human_review.get("required")):
+        raise RollupError(
+            f"{workflow_id}: the clean-send rate is defined by reviewer sign-offs, but "
+            "human_review.required is not true -- rollup_metrics does not apply here."
+        )
+    if CLEAN_SEND_TOKEN not in metric_name.lower().replace(" ", "-"):
+        raise RollupError(
+            f"{workflow_id}: success_metric.name is {metric_name!r}, not the clean-send "
+            "rate -- rollup_metrics only computes that metric and will not overwrite a "
+            "different one."
+        )
 
     record_paths = find_run_records(workflow_dir)
     if not record_paths:
@@ -140,7 +202,11 @@ def rollup(
             "so there is real feedback to measure."
         )
 
-    records = [parse_run_record(path) for path in record_paths]
+    records = []
+    for path in record_paths:
+        record = parse_run_record(path)
+        assert_finished(path, record)
+        records.append(record)
     rate, clean, total = clean_send_rate(records)
     value = round(rate, 4)
 
