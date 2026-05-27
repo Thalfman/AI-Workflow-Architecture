@@ -36,6 +36,19 @@ this log explains *why* it looks the way it does.
 - Effect: `status: in_review` in `contract.yaml`; recorded here and in the
   iteration log.
 
+### 2026-05-27 — Closed the feedback loop; current_value is measured, not hand-set
+- Decision: Populate `success_metric.current_value` exclusively from run records via
+  `scripts/rollup_metrics.py`, and adopt the `methodology/methods/feedback-review.md`
+  ritual for deciding keep / revise / retire.
+- Reason: The metric had been `null` since promotion — the backward arc of the loop
+  was open. The value must be reproducible from committed evidence, never asserted by
+  hand (`docs/plans/closed-loop-repo-assessment.md`).
+- Effect: After three real runs the rollup wrote `current_value: 0.6667` (2 of 3
+  approved with no edits) against the `>= 0.9` target, and recorded the first
+  `value-ledger.yaml` entry. This is a measurement, not a behavior change: inputs,
+  outputs, and acceptance criteria are unchanged, so no prompt or eval changed. Treat
+  0.6667 as directional on a 3-run sample, not a verdict.
+
 ## Sample acceptance (required for promotion)
 
 Promotion to production requires a dated entry here recording that a finished

@@ -41,3 +41,20 @@ what changed and what is next. Newest entries at the bottom.
   files (`OUTPUT_DRAFT.local.md`, `FINAL_OUTPUT.local.md`) stay gitignored.
 - Next: operate weekly via `/run-workflow`; capture one-time asks as run notes, not
   contract changes.
+
+## 2026-05-27 — closed the feedback loop (3 runs + metrics rollup + feedback review)
+- Operated the workflow over three synthetic weeks (weeks of 2026-04-27, 05-04, 05-11)
+  via the `/run-workflow` backbone, producing the first real run packets under
+  `operations/run-records/` (verdicts: 2 approved, 1 approved_with_edits). These are a
+  synthetic backfill to bootstrap the metric. Raw inputs and produced text stayed
+  local/gitignored; only hashes and verdicts were committed.
+- Added `scripts/rollup_metrics.py` and ran it: it measured the clean-send rate at
+  0.6667 (2/3) against the `>= 0.9` target, wrote it into
+  `contract.success_metric.current_value` (was `null`), and appended the first
+  `portfolio/value-ledger.yaml` entry. Value is derived from run records, never typed.
+- Added the `methodology/methods/feedback-review.md` ritual and bumped methodology to
+  v0.7. This workflow stays recorded at `methodology_version: v0.2` — not auto-migrated.
+- Next: at 0.6667 the metric is below the 0.9 target on a 3-run sample. On the next
+  feedback review, watch whether `approved_with_edits` recurs (the invented-progress
+  near-miss in the 05-04 run); if it does, open a contract-first `/revise-workflow` to
+  tighten the production prompt's accuracy guard.
