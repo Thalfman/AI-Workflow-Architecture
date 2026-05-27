@@ -17,4 +17,13 @@
 # Keep claims honest and tied to a measurement where possible. Never hand-edit
 # portfolio/workflows.yaml; that one is regenerated. This file, by contrast, is the
 # one portfolio artifact you do edit by hand.
-entries: []
+entries:
+- workflow_id: weekly-status-summary
+  date: 2026-05-27
+  event: value
+  value: 'Clean-send rate measured at 0.6667 across 3 production run record(s): 2
+    approved with no edits, 1 not clean-send.'
+  measurement: Clean-send rate = 2/3 = 0.6667 (target >= 0.9); computed by scripts/rollup_metrics.py
+    from 3 RUN_RECORD.md file(s).
+  notes: Derived from committed run records, not hand-entered. Small sample -- treat
+    as directional, not authoritative.
