@@ -60,7 +60,7 @@ success_metric:
   measurement_method: >
     Share of weekly summaries the reviewer approves with no edits before sending,
     tracked across run records.
-  current_value: null
+  current_value: 0.6667
   target_value: ">= 0.9"
 
 human_review:
