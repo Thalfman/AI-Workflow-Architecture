@@ -1,0 +1,4 @@
+# Development/test dependencies. The runtime install is requirements.txt; this adds
+# the test harness used by tests/ (the rollup metrics tests). CI does not run these.
+-r requirements.txt
+pytest>=8.0
